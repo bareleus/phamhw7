@@ -16,6 +16,8 @@
 #include<iostream>
 #include<fstream>
 #include<string>
+#include<unistd.h>
+#include<cstring>
 using namespace std;
 
 #define LED3_PATH "/sys/class/leds/beaglebone:green:usr3"
@@ -32,18 +34,37 @@ void removeTrigger(){
   writeLED("/trigger", "none");
 }
 
+// Function to display usage message
+void usageMessage(){
+   cout << "Usage is makeLED-hw7 and one of: " << endl;
+   cout << "   on, off, flash, or status" << endl;
+   cout << " e.g. makeLED-hw7 flash" << endl;
+   cout << endl;
+   cout << "If you want to make the LED blink n times." << endl;
+   cout << "Usage is makeLED-hw7 and the number of times that the LED will blink." << endl;   cout << " e.g. makeLED-hw7 blink 5" << endl;
+}
+
 int main(int argc, char* argv[]){
-   if(argc!=2){
-	cout << "Usage is makeLED and one of: " << endl;
-        cout << "   on, off, flash or status" << endl;
-	cout << " e.g. makeLED flash" << endl;
-        return 2;
+   // Condition when to display the usage message
+   if(argc==1){
+   	usageMessage();
+	return 1;
    }
+   if(argc==2 && strcmp(argv[1],"blink") == 0){
+	usageMessage();
+	return 2;
+   }
+   if(argc==3 && strcmp(argv[1],"blink") != 0 || argc>3){
+	usageMessage();
+	return 3;
+   }  
+   
+   // Convert the first argument to the string type
    string cmd(argv[1]);
    cout << "Starting the makeLED program" << endl;
    cout << "The current LED Path is: " << LED3_PATH << endl;
 
-   // select whether command is on, off, flash or status
+   // select whether command is on, off, flash, blink n times or status
    if(cmd=="on"){
         cout << "Turning the LED on" << endl;
 	removeTrigger();
@@ -59,6 +80,24 @@ int main(int argc, char* argv[]){
         writeLED("/trigger", "timer");
         writeLED("/delay_on", "50");
         writeLED("/delay_off", "50");
+   }
+   // Condition to make the LED blink
+   else if (cmd=="blink"){ // Check if the argument is "blink"
+	// Variable to takes the number of times that the LED will blink
+	string cmd1(argv[2]);
+	// Display blink message
+	cout << "Blinking the LED " << cmd1 << " times" << endl;
+	removeTrigger();
+	// A count up variable
+	int counter = 0;
+	// Loop to blink the n times LED
+	while(counter!=stoi(cmd1)){
+	writeLED("/brightness","1"); // Turn on the LED
+	sleep(1); // Stay on a sec
+	writeLED("/brightness","0"); // Turn off the LED
+	sleep(1); // Stay off for a sec
+	counter++; // Keep track the number of time that the LED has been blinked.
+	}
    }
    else if (cmd=="status"){
 	// display the current trigger details
